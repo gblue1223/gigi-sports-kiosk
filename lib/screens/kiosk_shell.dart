@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/reservation.dart';
 import '../theme.dart';
+import '../widgets/kiosk_chrome.dart';
+import 'home_screen.dart';
 
 enum KioskRoute { home, booking, lookup }
 
@@ -20,7 +22,7 @@ class _KioskShellState extends State<KioskShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: KioskColors.black,
+      backgroundColor: KioskColors.forest,
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Center(
@@ -31,10 +33,11 @@ class _KioskShellState extends State<KioskShell> {
                 child: SafeArea(
                   child: switch (route) {
                     KioskRoute.home => HomeScreen(
-                      onBooking: () =>
-                          setState(() => route = KioskRoute.booking),
-                      onLookup: () => setState(() => route = KioskRoute.lookup),
-                    ),
+                        onBooking: () =>
+                            setState(() => route = KioskRoute.booking),
+                        onLookup: () =>
+                            setState(() => route = KioskRoute.lookup),
+                      ),
                     KioskRoute.booking => BookingFlowScreen(onExit: _goHome),
                     KioskRoute.lookup => LookupScreen(onExit: _goHome),
                   },
@@ -43,238 +46,6 @@ class _KioskShellState extends State<KioskShell> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({
-    required this.onBooking,
-    required this.onLookup,
-    super.key,
-  });
-
-  final VoidCallback onBooking;
-  final VoidCallback onLookup;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const KioskHeader(showHome: false),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(30, 20, 30, 28),
-            children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  '스크린 파크골프,\n쉽고 빠르게 예약하세요',
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                '원하시는 메뉴를 눌러주세요.\n예약은 1분이면 충분합니다.',
-                style: TextStyle(
-                  color: KioskColors.muted,
-                  fontSize: 20,
-                  height: 1.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 34),
-              _HomeActionCard(
-                key: const Key('new-booking-button'),
-                icon: Icons.calendar_month_rounded,
-                title: '새로 예약하기',
-                description: '날짜와 시간을 선택해 예약합니다',
-                color: KioskColors.green,
-                foreground: Colors.white,
-                onTap: onBooking,
-              ),
-              const SizedBox(height: 18),
-              _HomeActionCard(
-                key: const Key('lookup-button'),
-                icon: Icons.search_rounded,
-                title: '내 예약 확인',
-                description: '휴대폰 번호로 예약을 찾습니다',
-                color: Colors.white,
-                foreground: KioskColors.ink,
-                onTap: onLookup,
-              ),
-              const SizedBox(height: 26),
-              const _TodayInfo(),
-            ],
-          ),
-        ),
-        const HelpFooter(),
-      ],
-    );
-  }
-}
-
-class _HomeActionCard extends StatelessWidget {
-  const _HomeActionCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.color,
-    required this.foreground,
-    required this.onTap,
-    super.key,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-  final Color color;
-  final Color foreground;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: '$title, $description',
-      child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 142),
-            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: color == Colors.white
-                    ? KioskColors.line
-                    : Colors.transparent,
-                width: 1.5,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1414140A),
-                  blurRadius: 24,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 76,
-                  height: 76,
-                  decoration: BoxDecoration(
-                    color: foreground.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: foreground, size: 38),
-                ),
-                const SizedBox(width: 22),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: foreground,
-                          fontSize: 27,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.6,
-                        ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          color: foreground.withValues(alpha: 0.76),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.arrow_forward_rounded, color: foreground, size: 32),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TodayInfo extends StatelessWidget {
-  const _TodayInfo();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 19),
-      decoration: BoxDecoration(
-        color: KioskColors.greenSoft,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.schedule_rounded, color: KioskColors.greenDark, size: 30),
-          SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '오늘 운영시간',
-                  style: TextStyle(
-                    color: KioskColors.greenDark,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  '오전 9:00 ~ 오후 10:00',
-                  style: TextStyle(
-                    color: KioskColors.ink,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _OpenBadge(),
-        ],
-      ),
-    );
-  }
-}
-
-class _OpenBadge extends StatelessWidget {
-  const _OpenBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: const Text(
-        '영업 중',
-        style: TextStyle(
-          color: KioskColors.greenDark,
-          fontSize: 15,
-          fontWeight: FontWeight.w800,
-        ),
       ),
     );
   }
@@ -318,12 +89,12 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
   bool completed = false;
 
   bool get canContinue => switch (step) {
-    0 => draft.time != null,
-    1 => true,
-    2 => draft.phone.length == 11,
-    3 => true,
-    _ => false,
-  };
+        0 => draft.time != null,
+        1 => true,
+        2 => draft.phone.length == 11,
+        3 => true,
+        _ => false,
+      };
 
   void _back() {
     if (step == 0) {
@@ -380,16 +151,16 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
               key: ValueKey(step),
               child: switch (step) {
                 0 => DateTimeStep(
-                  dates: dates,
-                  slots: slots,
-                  draft: draft,
-                  onChanged: () => setState(() {}),
-                ),
+                    dates: dates,
+                    slots: slots,
+                    draft: draft,
+                    onChanged: () => setState(() {}),
+                  ),
                 1 => PartyStep(draft: draft, onChanged: () => setState(() {})),
                 2 => ContactStep(
-                  draft: draft,
-                  onChanged: () => setState(() {}),
-                ),
+                    draft: draft,
+                    onChanged: () => setState(() {}),
+                  ),
                 _ => ConfirmStep(draft: draft, dates: dates),
               },
             ),
@@ -425,7 +196,7 @@ class BookingProgress extends StatelessWidget {
             return Expanded(
               child: Container(
                 height: 3,
-                color: active ? KioskColors.green : KioskColors.line,
+                color: active ? KioskColors.greenDark : KioskColors.line,
               ),
             );
           }
@@ -438,7 +209,7 @@ class BookingProgress extends StatelessWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: active ? KioskColors.green : KioskColors.creamDark,
+                  color: active ? KioskColors.greenDark : KioskColors.creamDark,
                   shape: BoxShape.circle,
                 ),
                 child: item < currentStep
@@ -452,7 +223,7 @@ class BookingProgress extends StatelessWidget {
                         style: TextStyle(
                           color: active ? Colors.white : KioskColors.subtle,
                           fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
               ),
@@ -462,7 +233,7 @@ class BookingProgress extends StatelessWidget {
                 style: TextStyle(
                   color: active ? KioskColors.greenDark : KioskColors.subtle,
                   fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -497,7 +268,7 @@ class DateTimeStep extends StatelessWidget {
         const Text('날짜와 시작 시간을 선택해 주세요.'),
         const SizedBox(height: 24),
         SizedBox(
-          height: 104,
+          height: 104 * MediaQuery.textScalerOf(context).scale(1),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: dates.length,
@@ -514,7 +285,7 @@ class DateTimeStep extends StatelessWidget {
                   onChanged();
                 },
                 label: SizedBox(
-                  width: 78,
+                  width: 78 * MediaQuery.textScalerOf(context).scale(1),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -530,7 +301,7 @@ class DateTimeStep extends StatelessWidget {
                         '${item.day}',
                         style: const TextStyle(
                           fontSize: 27,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
@@ -546,12 +317,12 @@ class DateTimeStep extends StatelessWidget {
                 labelPadding: EdgeInsets.zero,
                 padding: EdgeInsets.zero,
                 backgroundColor: Colors.white,
-                selectedColor: KioskColors.green,
+                selectedColor: KioskColors.greenDark,
                 labelStyle: TextStyle(
                   color: selected ? Colors.white : KioskColors.ink,
                 ),
                 side: BorderSide(
-                  color: selected ? KioskColors.green : KioskColors.line,
+                  color: selected ? KioskColors.greenDark : KioskColors.line,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -565,7 +336,7 @@ class DateTimeStep extends StatelessWidget {
           children: [
             const Text(
               '시작 시간',
-              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
             ),
             const Spacer(),
             Container(width: 10, height: 10, color: KioskColors.line),
@@ -624,8 +395,8 @@ class _TimeButton extends StatelessWidget {
       color: !slot.enabled
           ? KioskColors.creamDark
           : selected
-          ? KioskColors.green
-          : Colors.white,
+              ? KioskColors.greenDark
+              : Colors.white,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -635,7 +406,7 @@ class _TimeButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: selected ? KioskColors.green : KioskColors.line,
+              color: selected ? KioskColors.greenDark : KioskColors.line,
               width: 1.5,
             ),
           ),
@@ -648,10 +419,10 @@ class _TimeButton extends StatelessWidget {
                   color: !slot.enabled
                       ? KioskColors.subtle
                       : selected
-                      ? Colors.white
-                      : KioskColors.ink,
+                          ? Colors.white
+                          : KioskColors.ink,
                   fontSize: 21,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 2),
@@ -661,7 +432,7 @@ class _TimeButton extends StatelessWidget {
                   color: selected
                       ? Colors.white.withValues(alpha: 0.78)
                       : KioskColors.subtle,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -696,7 +467,7 @@ class PartyStep extends StatelessWidget {
               children: [
                 const Text(
                   '이용 인원',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -721,7 +492,7 @@ class PartyStep extends StatelessWidget {
                               style: const TextStyle(
                                 color: KioskColors.greenDark,
                                 fontSize: 52,
-                                fontWeight: FontWeight.w900,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const TextSpan(
@@ -729,7 +500,7 @@ class PartyStep extends StatelessWidget {
                               style: TextStyle(
                                 color: KioskColors.ink,
                                 fontSize: 22,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -762,7 +533,7 @@ class PartyStep extends StatelessWidget {
         const SizedBox(height: 24),
         const Text(
           '이용 시간',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 14),
         _DurationOption(
@@ -857,7 +628,7 @@ class _DurationOption extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: selected ? KioskColors.green : KioskColors.line,
+              color: selected ? KioskColors.greenDark : KioskColors.line,
               width: selected ? 2 : 1,
             ),
           ),
@@ -867,7 +638,7 @@ class _DurationOption extends StatelessWidget {
                 selected
                     ? Icons.radio_button_checked_rounded
                     : Icons.radio_button_off_rounded,
-                color: selected ? KioskColors.green : KioskColors.subtle,
+                color: selected ? KioskColors.greenDark : KioskColors.subtle,
                 size: 30,
               ),
               const SizedBox(width: 16),
@@ -881,7 +652,7 @@ class _DurationOption extends StatelessWidget {
                           '$minutes분',
                           style: const TextStyle(
                             fontSize: 22,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         if (recommended) ...[
@@ -899,8 +670,8 @@ class _DurationOption extends StatelessWidget {
                               '추천',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -923,7 +694,7 @@ class _DurationOption extends StatelessWidget {
                 style: const TextStyle(
                   color: KioskColors.greenDark,
                   fontSize: 18,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -1014,7 +785,8 @@ class PhoneDisplay extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: phone.length == 11 ? KioskColors.green : KioskColors.line,
+            color:
+                phone.length == 11 ? KioskColors.greenDark : KioskColors.line,
             width: 2,
           ),
         ),
@@ -1024,7 +796,7 @@ class PhoneDisplay extends StatelessWidget {
             color: phone.isEmpty ? KioskColors.subtle : KioskColors.ink,
             fontSize: 30,
             letterSpacing: 1.6,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -1079,7 +851,7 @@ class NumberPad extends StatelessWidget {
                         keyValue,
                         style: const TextStyle(
                           fontSize: 28,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
               ),
@@ -1167,7 +939,7 @@ class ConfirmStep extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -1226,7 +998,7 @@ class _SummaryRow extends StatelessWidget {
                 style: const TextStyle(
                   color: KioskColors.ink,
                   fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -1324,7 +1096,7 @@ class BookingSuccessScreen extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.check_rounded,
-                      color: KioskColors.green,
+                      color: KioskColors.greenDark,
                       size: 64,
                     ),
                   ),
@@ -1366,7 +1138,7 @@ class BookingSuccessScreen extends StatelessWidget {
                             color: KioskColors.greenDark,
                             fontSize: 31,
                             letterSpacing: 1,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const Divider(height: 34),
@@ -1375,7 +1147,7 @@ class BookingSuccessScreen extends StatelessWidget {
                           style: const TextStyle(
                             color: KioskColors.ink,
                             fontSize: 21,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1519,140 +1291,6 @@ class _LookupScreenState extends State<LookupScreen> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class KioskHeader extends StatelessWidget {
-  const KioskHeader({this.onHome, this.showHome = true, super.key});
-
-  final VoidCallback? onHome;
-  final bool showHome;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 92,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: KioskColors.line)),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/brand/gigi_green.png',
-            width: 136,
-            height: 52,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Text(
-              'GIGI SPORTS',
-              style: TextStyle(
-                color: KioskColors.greenDark,
-                fontSize: 21,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const Spacer(),
-          const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '미추홀점',
-                style: TextStyle(
-                  color: KioskColors.ink,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              SizedBox(height: 3),
-              Text(
-                '2026. 9. 1. 화요일',
-                style: TextStyle(color: KioskColors.muted, fontSize: 13),
-              ),
-            ],
-          ),
-          if (showHome) ...[
-            const SizedBox(width: 14),
-            IconButton.outlined(
-              tooltip: '첫 화면',
-              onPressed: onHome,
-              icon: const Icon(Icons.home_outlined, size: 27),
-              style: IconButton.styleFrom(minimumSize: const Size(54, 54)),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class HelpFooter extends StatelessWidget {
-  const HelpFooter({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(28, 15, 28, 17),
-      decoration: const BoxDecoration(
-        color: KioskColors.black,
-        border: Border(top: BorderSide(color: Color(0xFF2A2820))),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.10),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.support_agent_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '도움이 필요하신가요?',
-                  style: TextStyle(
-                    color: Color(0xFFB9B6A8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '직원을 불러주세요',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          FilledButton(
-            onPressed: null,
-            style: ButtonStyle(
-              minimumSize: const WidgetStatePropertyAll(Size(126, 56)),
-              backgroundColor: WidgetStatePropertyAll(
-                KioskColors.green.withValues(alpha: 0.95),
-              ),
-              foregroundColor: const WidgetStatePropertyAll(Colors.white),
-            ),
-            child: const Text('직원 호출'),
-          ),
-        ],
-      ),
     );
   }
 }

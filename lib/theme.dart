@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 abstract final class KioskColors {
+  static const forest = Color(0xFF122A1D);
+  static const mint = Color(0xFFACDFC0);
   static const green = Color(0xFF2FA866);
   static const greenDark = Color(0xFF1F7A4A);
   static const greenSoft = Color(0xFFE9F5EE);
@@ -19,7 +21,7 @@ ThemeData buildKioskTheme() {
   const radius = 20.0;
   final scheme = ColorScheme.fromSeed(
     seedColor: KioskColors.green,
-    primary: KioskColors.green,
+    primary: KioskColors.greenDark,
     secondary: KioskColors.gold,
     surface: Colors.white,
   );
@@ -28,6 +30,7 @@ ThemeData buildKioskTheme() {
     useMaterial3: true,
     colorScheme: scheme,
     scaffoldBackgroundColor: KioskColors.cream,
+    fontFamily: 'Pretendard',
     fontFamilyFallback: const [
       'Pretendard',
       'Noto Sans KR',
@@ -39,20 +42,20 @@ ThemeData buildKioskTheme() {
         color: KioskColors.black,
         fontSize: 42,
         height: 1.16,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         letterSpacing: -1.5,
       ),
       headlineMedium: TextStyle(
         color: KioskColors.black,
         fontSize: 30,
         height: 1.25,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         letterSpacing: -0.8,
       ),
       titleLarge: TextStyle(
         color: KioskColors.black,
         fontSize: 23,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         letterSpacing: -0.4,
       ),
       titleMedium: TextStyle(
@@ -72,7 +75,7 @@ ThemeData buildKioskTheme() {
         height: 1.45,
         fontWeight: FontWeight.w500,
       ),
-      labelLarge: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+      labelLarge: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
@@ -86,14 +89,17 @@ ThemeData buildKioskTheme() {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: KioskColors.green,
+        backgroundColor: KioskColors.greenDark,
         foregroundColor: Colors.white,
         disabledBackgroundColor: KioskColors.line,
         disabledForegroundColor: KioskColors.subtle,
         minimumSize: const Size(120, 72),
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        textStyle: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+        textStyle: const TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 21,
+            fontWeight: FontWeight.w700),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -103,7 +109,10 @@ ThemeData buildKioskTheme() {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         side: const BorderSide(color: KioskColors.line, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        textStyle: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+        textStyle: const TextStyle(
+            fontFamily: 'Pretendard',
+            fontSize: 19,
+            fontWeight: FontWeight.w700),
       ),
     ),
     snackBarTheme: SnackBarThemeData(

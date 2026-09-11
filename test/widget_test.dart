@@ -20,9 +20,38 @@ void main() {
 
     expect(find.text('새로 예약하기'), findsOneWidget);
     expect(find.text('내 예약 확인'), findsOneWidget);
-    expect(find.byType(FlutterError), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
+  for (final size in [const Size(540, 960), const Size(720, 1280)]) {
+    testWidgets('home actions remain reachable at $size with larger text',
+        (tester) async {
+      await setPortraitSize(tester, size: size);
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpWidget(const GigiKioskApp());
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final lookup = find.byKey(const Key('lookup-button'));
+      await tester.ensureVisible(lookup);
+      await tester.pumpAndSettle();
+      await tester.tap(lookup);
+      await tester.pumpAndSettle();
+      expect(find.text('예약을 확인할게요'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+      final booking = find.byKey(const Key('new-booking-button'));
+      await tester.ensureVisible(booking);
+      await tester.pumpAndSettle();
+      await tester.tap(booking);
+      await tester.pumpAndSettle();
+      expect(find.text('언제 이용하시나요?'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('user can complete a reservation', (tester) async {
     await setPortraitSize(tester);
     await tester.pumpWidget(const GigiKioskApp());
