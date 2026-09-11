@@ -155,6 +155,11 @@ void main() {
     await tester.tap(find.text('예약 찾기'));
     await tester.pumpAndSettle();
     expect(api.lookupPhone, '01012345678');
+    expect(find.text('내 예약 내역'), findsOneWidget);
+    expect(find.text('24,000원'), findsOneWidget);
+    expect(find.text('010-****-5678'), findsOneWidget);
+    expect(find.text('예약 찾기'), findsNothing);
+    expect(find.text('다른 번호 조회'), findsOneWidget);
     expect(find.text('예약 번호 1234567890'), findsOneWidget);
     await tester.pump(const Duration(minutes: 3));
     await tester.pumpAndSettle();

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/reservation.dart';
 import '../services/booking_api.dart';
 import '../widgets/kiosk_chrome.dart';
+import '../widgets/lookup_reservation_card.dart';
+import '../theme.dart';
 import 'kiosk_shell.dart';
 
 String errorText(Object error) => error is BookingApiException
@@ -243,6 +245,7 @@ class LookupScreen extends StatefulWidget {
 class _LookupScreenState extends State<LookupScreen> {
   String phone = '';
   bool busy = false;
+  bool searched = false;
   String? message;
   List<Reservation> results = [];
   void _press(String value) {
@@ -271,7 +274,7 @@ class _LookupScreenState extends State<LookupScreen> {
       if (mounted) {
         setState(() {
           results = value;
-          if (value.isEmpty) message = '일치하는 예약이 없습니다. 휴대폰 번호를 확인해 주세요.';
+          searched = true;
         });
       }
     } catch (error) {
@@ -281,50 +284,140 @@ class _LookupScreenState extends State<LookupScreen> {
     }
   }
 
+  void _newSearch() {
+    setState(() {
+      phone = '';
+      results = [];
+      message = null;
+      searched = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) => Column(children: [
         KioskHeader(onHome: widget.onExit),
         if (busy) const LinearProgressIndicator(),
         Expanded(
-            child: ListView(padding: const EdgeInsets.all(28), children: [
-          Text('예약을 확인할게요', style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 8),
-          const Text('예약할 때 입력한 휴대폰 번호를 입력해 주세요.'),
-          const SizedBox(height: 16),
-          PhoneDisplay(phone: phone),
-          const SizedBox(height: 16),
-          NumberPad(onPressed: _press),
-          if (message != null)
-            Padding(padding: const EdgeInsets.all(16), child: Text(message!)),
-          if (results.isNotEmpty) const Text('최근 예약부터 최대 50건을 표시합니다.'),
-          for (final row in results)
-            Card(
-                child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('예약 번호 ${row.code}',
-                              style: const TextStyle(
-                                  fontSize: 24, fontWeight: FontWeight.bold)),
-                          Text('${row.dateLabel} · ${row.statusLabel}'),
-                          Text(
-                              '${row.players}명 · ${row.duration}분 · ${row.bayNumber}번 타석'),
-                          Text('현장 결제 ${row.totalPrice}원'),
-                        ]))),
-        ])),
-        Padding(
-            padding: const EdgeInsets.all(24),
-            child: Row(children: [
-              OutlinedButton(onPressed: widget.onExit, child: const Text('취소')),
-              const SizedBox(width: 14),
-              Expanded(
-                  child: FilledButton(
-                      onPressed: !busy && RegExp(r'^010\d{8}$').hasMatch(phone)
-                          ? _search
-                          : null,
-                      child: const Text('예약 찾기'))),
-            ])),
+          child: ListView(
+            key: ValueKey(searched),
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 16),
+            children: [
+              Text(searched ? '내 예약 내역' : '예약을 확인할게요',
+                  style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 10),
+              if (!searched) ...[
+                const Text('예약할 때 입력한 휴대폰 번호를 입력해 주세요.'),
+                const SizedBox(height: 20),
+                PhoneDisplay(phone: phone),
+                const SizedBox(height: 16),
+                NumberPad(onPressed: _press),
+              ] else ...[
+                Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const Icon(Icons.phone_outlined,
+                          color: KioskColors.muted, size: 20),
+                      Text('010-****-${phone.substring(7)}',
+                          style: const TextStyle(fontSize: 18)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                            color: KioskColors.greenSoft,
+                            borderRadius: BorderRadius.circular(24)),
+                        child: Text('${results.length}건',
+                            style: const TextStyle(
+                                color: KioskColors.greenDark,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16)),
+                      ),
+                    ]),
+                const SizedBox(height: 24),
+                if (results.isEmpty)
+                  Card(
+                      child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 48),
+                    child: Column(children: [
+                      Container(
+                        padding: const EdgeInsets.all(22),
+                        decoration: const BoxDecoration(
+                            color: KioskColors.cream, shape: BoxShape.circle),
+                        child: const Icon(Icons.event_note_rounded,
+                            size: 42, color: KioskColors.muted),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text('예약 내역이 없어요',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 24,
+                              color: KioskColors.ink,
+                              fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 12),
+                      const Text(
+                          '예약할 때 입력한 번호가 맞는지 확인해 주세요.\n도움이 필요하면 카운터에 문의해 주세요.',
+                          textAlign: TextAlign.center),
+                    ]),
+                  ))
+                else ...[
+                  const Text('예약 시간과 타석을 확인해 주세요.'),
+                  const SizedBox(height: 16),
+                  for (final row in results)
+                    Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: LookupReservationCard(reservation: row)),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('최근 예약부터 최대 50건 · 2분 미사용 시 첫 화면으로 이동',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14)),
+                  ),
+                ],
+              ],
+              if (message != null)
+                Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Card(
+                      child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(children: [
+                            const Icon(Icons.info_outline_rounded,
+                                color: KioskColors.danger),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text(message!)),
+                          ])),
+                    )),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+              color: KioskColors.cream,
+              border: Border(top: BorderSide(color: KioskColors.line))),
+          child: Row(children: [
+            OutlinedButton(
+                onPressed: busy
+                    ? null
+                    : searched
+                        ? _newSearch
+                        : widget.onExit,
+                child: Text(searched ? '다른 번호 조회' : '취소')),
+            const SizedBox(width: 14),
+            Expanded(
+                child: FilledButton(
+                    onPressed: busy
+                        ? null
+                        : searched
+                            ? widget.onExit
+                            : RegExp(r'^010\d{8}$').hasMatch(phone)
+                                ? _search
+                                : null,
+                    child: Text(searched ? '확인' : '예약 찾기'))),
+          ]),
+        ),
       ]);
 }
 
