@@ -19,3 +19,7 @@ windows/flutter/ephemeral/
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Vercel Flutter SDK and local deployment metadata
+.flutter-sdk/
+.vercel/

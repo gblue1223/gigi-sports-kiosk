@@ -6,6 +6,29 @@ import 'package:gigi_sports_kiosk/services/booking_api.dart';
 import 'package:gigi_sports_kiosk/models/reservation.dart';
 
 void main() {
+  const compiledBaseUrl = String.fromEnvironment('CMS_BASE_URL');
+  test('default API client consumes the CMS URL passed at compilation',
+      () async {
+    late http.Request request;
+    final api = CmsBookingApi(client: MockClient((value) async {
+      request = value;
+      return http.Response(
+          jsonEncode({
+            'token': 'test-session',
+            'expiresAt':
+                DateTime.now().add(const Duration(hours: 8)).toIso8601String(),
+          }),
+          200);
+    }));
+    addTearDown(api.close);
+    await api.pair('1234567890');
+    expect(request.url, Uri.parse(compiledBaseUrl).resolve('/api/kiosk/pair'));
+    expect(api.paired, isTrue);
+  },
+      skip: compiledBaseUrl.isEmpty
+          ? 'Run with --dart-define=CMS_BASE_URL to verify the compiled configuration.'
+          : false);
+
   http.Response paired() => http.Response(
       jsonEncode({
         'token': 'short-session',
