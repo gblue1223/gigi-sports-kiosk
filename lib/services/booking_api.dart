@@ -19,7 +19,7 @@ abstract class BookingRepository {
   Future<List<TimeSlot>> availability(String date, int duration);
   Future<Reservation> create(
       ReservationDraft draft, String date, String requestId);
-  Future<List<Reservation>> lookup(String phone, String code);
+  Future<List<Reservation>> lookup(String phone);
   void close() {}
 }
 
@@ -100,6 +100,8 @@ class CmsBookingApi extends BookingRepository {
     return (data['slots'] as List)
         .map((v) => TimeSlot(v['time'] as String,
             remaining: v['remaining'] as int,
+            availableBays:
+                (v['available_bays'] as List? ?? const []).cast<int>(),
             enabled: (v['remaining'] as int) > 0))
         .toList();
   }
@@ -115,13 +117,14 @@ class CmsBookingApi extends BookingRepository {
       'phone': draft.phone,
       'requestId': requestId,
       'expectedPrice': draft.price,
+      if (draft.bayNumber != null) 'bayNumber': draft.bayNumber,
     });
     return Reservation.fromJson(data['reservation'] as Map<String, dynamic>);
   }
 
   @override
-  Future<List<Reservation>> lookup(String phone, String code) async {
-    final data = await _request('lookup', body: {'phone': phone, 'code': code});
+  Future<List<Reservation>> lookup(String phone) async {
+    final data = await _request('lookup', body: {'phone': phone});
     return (data['reservations'] as List)
         .map((v) => Reservation.fromJson(v as Map<String, dynamic>))
         .toList();

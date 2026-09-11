@@ -193,6 +193,7 @@ class DateTimeStep extends StatelessWidget {
                 onSelected: (_) {
                   draft.dateIndex = index;
                   draft.time = null;
+                  draft.bayNumber = null;
                   onChanged();
                 },
                 label: SizedBox(
@@ -242,6 +243,35 @@ class DateTimeStep extends StatelessWidget {
             },
           ),
         ),
+        if (draft.time != null) ...[
+          const SizedBox(height: 24),
+          const Text('이용 타석',
+              style: TextStyle(fontSize: 21, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          Text('${draft.time}부터 ${draft.duration}분 동안 이용 가능한 타석입니다.'),
+          const SizedBox(height: 12),
+          Wrap(spacing: 12, runSpacing: 12, children: [
+            ChoiceChip(
+              label: const Text('자동 배정'),
+              selected: draft.bayNumber == null,
+              onSelected: (_) {
+                draft.bayNumber = null;
+                onChanged();
+              },
+            ),
+            for (final slot in slots.where((slot) => slot.time == draft.time))
+              for (final bay in slot.availableBays)
+                ChoiceChip(
+                  key: ValueKey('bay-$bay'),
+                  label: Text('$bay번 타석'),
+                  selected: draft.bayNumber == bay,
+                  onSelected: (_) {
+                    draft.bayNumber = bay;
+                    onChanged();
+                  },
+                ),
+          ]),
+        ],
         const SizedBox(height: 30),
         Row(
           children: [
@@ -278,6 +308,7 @@ class DateTimeStep extends StatelessWidget {
               onTap: slot.enabled
                   ? () {
                       draft.time = slot.time;
+                      draft.bayNumber = null;
                       onChanged();
                     }
                   : null,
@@ -814,6 +845,14 @@ class ConfirmStep extends StatelessWidget {
                   icon: Icons.groups_rounded,
                   label: '이용 인원',
                   value: '${draft.players}명 · ${draft.duration}분',
+                ),
+                const Divider(height: 30),
+                _SummaryRow(
+                  icon: Icons.sports_golf_rounded,
+                  label: '이용 타석',
+                  value: draft.bayNumber == null
+                      ? '자동 배정'
+                      : '${draft.bayNumber}번 타석',
                 ),
                 const Divider(height: 30),
                 _SummaryRow(

@@ -82,6 +82,9 @@ void main() {
       'requestId': id,
       'expectedPrice': 24000
     });
+    draft.bayNumber = 2;
+    await api.create(draft, '2026-12-01', newRequestId());
+    expect(jsonDecode(requests.last.body)['bayNumber'], 2);
   });
   test('revokes local session on 401 and surfaces conflict instead of success',
       () async {
@@ -98,8 +101,8 @@ void main() {
         throwsA(
             isA<BookingApiException>().having((e) => e.status, 'status', 409)));
     status = 401;
-    await expectLater(api.lookup('01012345678', '1234567890'),
-        throwsA(isA<BookingApiException>()));
+    await expectLater(
+        api.lookup('01012345678'), throwsA(isA<BookingApiException>()));
     expect(api.paired, false);
   });
   test('lookup uses POST body so phone does not appear in URL', () async {
@@ -112,11 +115,24 @@ void main() {
           return http.Response('{"reservations":[]}', 200);
         }));
     await api.pair('1234567890');
-    expect(await api.lookup('01012345678', '1234567890'), isEmpty);
+    expect(await api.lookup('01012345678'), isEmpty);
     expect(request.method, 'POST');
     expect(request.url.query, isEmpty);
-    expect(jsonDecode(request.body),
-        {'phone': '01012345678', 'code': '1234567890'});
+    expect(jsonDecode(request.body), {'phone': '01012345678'});
+  });
+  test('availability carries the exact available bay numbers', () async {
+    final api = CmsBookingApi(
+        baseUrl: 'https://cms.example',
+        client: MockClient((r) async => r.url.path.endsWith('/pair')
+            ? paired()
+            : http.Response(
+                '{"slots":[{"time":"09:00","remaining":2,"available_bays":[1,3]}]}',
+                200)));
+    addTearDown(api.close);
+    await api.pair('1234567890');
+    final slots = await api.availability('2026-12-01', 60);
+    expect(slots.single.availableBays, [1, 3]);
+    expect(slots.single.enabled, isTrue);
   });
   test('request ids are version 4 UUIDs and differ', () {
     final ids = List.generate(100, (_) => newRequestId());

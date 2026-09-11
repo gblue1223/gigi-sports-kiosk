@@ -24,10 +24,14 @@ class BookingDate {
 }
 
 class TimeSlot {
-  const TimeSlot(this.time, {this.remaining = 0, this.enabled = false});
+  const TimeSlot(this.time,
+      {this.remaining = 0,
+      this.enabled = false,
+      this.availableBays = const []});
   final String time;
   final int remaining;
   final bool enabled;
+  final List<int> availableBays;
 }
 
 class BookingConfig {
@@ -66,6 +70,7 @@ class BookingConfig {
 class ReservationDraft {
   int dateIndex = 0;
   String? time;
+  int? bayNumber;
   int players = 2;
   int duration = 60;
   String phone = '';

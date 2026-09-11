@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                   key: const Key('lookup-button'),
                   icon: Icons.search_rounded,
                   title: '내 예약 확인',
-                  description: '휴대폰·예약 번호로 예약을 찾습니다',
+                  description: '휴대폰 번호로 예약을 찾습니다',
                   onTap: onLookup,
                   compact: compact,
                 ),

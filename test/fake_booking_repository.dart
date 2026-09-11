@@ -6,7 +6,8 @@ class FakeBookingRepository extends BookingRepository {
   bool failFirstCreate = false;
   bool durationUnavailable = false;
   String? lookupPhone;
-  String? lookupCode;
+  int? createdBay;
+  bool selectedBayUnavailable = false;
   final result = Reservation(
       id: 'test',
       code: '1234567890',
@@ -31,6 +32,8 @@ class FakeBookingRepository extends BookingRepository {
   Future<List<TimeSlot>> availability(String date, int duration) async => [
         TimeSlot('09:00',
             remaining: durationUnavailable && duration == 90 ? 0 : 2,
+            availableBays:
+                selectedBayUnavailable && duration == 90 ? [1] : [1, 2],
             enabled: !(durationUnavailable && duration == 90)),
         const TimeSlot('10:00'),
       ];
@@ -38,6 +41,7 @@ class FakeBookingRepository extends BookingRepository {
   Future<Reservation> create(
       ReservationDraft draft, String date, String requestId) async {
     requestIds.add(requestId);
+    createdBay = draft.bayNumber;
     if (failFirstCreate && requestIds.length == 1) {
       throw const BookingApiException('통신 오류');
     }
@@ -45,9 +49,8 @@ class FakeBookingRepository extends BookingRepository {
   }
 
   @override
-  Future<List<Reservation>> lookup(String phone, String code) async {
+  Future<List<Reservation>> lookup(String phone) async {
     lookupPhone = phone;
-    lookupCode = code;
-    return phone == '01012345678' && code == result.code ? [result] : [];
+    return phone == '01012345678' ? [result] : [];
   }
 }

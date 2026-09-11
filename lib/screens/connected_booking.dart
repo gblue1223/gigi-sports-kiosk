@@ -86,10 +86,15 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
         slots = value;
         loading = false;
         if (draft.time != null &&
-            !slots.any((slot) => slot.time == draft.time && slot.enabled)) {
+            !slots.any((slot) =>
+                slot.time == draft.time &&
+                slot.enabled &&
+                (draft.bayNumber == null ||
+                    slot.availableBays.contains(draft.bayNumber)))) {
           draft.time = null;
+          draft.bayNumber = null;
           step = 0;
-          message = '선택한 이용 시간에 맞는 시작 시간을 다시 선택해 주세요.';
+          message = '선택한 타석 또는 시간이 마감되었습니다. 시작 시간과 타석을 다시 선택해 주세요.';
         }
       });
     } catch (error) {
@@ -97,6 +102,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
         setState(() {
           loading = false;
           draft.time = null;
+          draft.bayNumber = null;
           message = errorText(error);
         });
       }
@@ -162,6 +168,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
         final conflictMessage = error.message;
         requestId = newRequestId();
         draft.time = null;
+        draft.bayNumber = null;
         step = 0;
         await _initialize();
         if (mounted) setState(() => message = conflictMessage);
@@ -235,8 +242,6 @@ class LookupScreen extends StatefulWidget {
 
 class _LookupScreenState extends State<LookupScreen> {
   String phone = '';
-  String code = '';
-  bool enteringCode = false;
   bool busy = false;
   String? message;
   List<Reservation> results = [];
@@ -245,17 +250,13 @@ class _LookupScreenState extends State<LookupScreen> {
     setState(() {
       message = null;
       results = [];
-      var input = enteringCode ? code : phone;
+      var input = phone;
       if (value == 'back') {
         if (input.isNotEmpty) input = input.substring(0, input.length - 1);
-      } else if (input.length < (enteringCode ? 10 : 11)) {
+      } else if (input.length < 11) {
         input += value;
       }
-      if (enteringCode) {
-        code = input;
-      } else {
-        phone = input;
-      }
+      phone = input;
     });
   }
 
@@ -266,11 +267,11 @@ class _LookupScreenState extends State<LookupScreen> {
       results = [];
     });
     try {
-      final value = await widget.api.lookup(phone, code);
+      final value = await widget.api.lookup(phone);
       if (mounted) {
         setState(() {
           results = value;
-          if (value.isEmpty) message = '일치하는 예약이 없습니다. 휴대폰 번호와 예약 번호를 확인해 주세요.';
+          if (value.isEmpty) message = '일치하는 예약이 없습니다. 휴대폰 번호를 확인해 주세요.';
         });
       }
     } catch (error) {
@@ -288,24 +289,14 @@ class _LookupScreenState extends State<LookupScreen> {
             child: ListView(padding: const EdgeInsets.all(28), children: [
           Text('예약을 확인할게요', style: Theme.of(context).textTheme.headlineMedium),
           const SizedBox(height: 8),
-          const Text('휴대폰 번호와 예약 완료 화면의 10자리 예약 번호를 입력해 주세요.'),
+          const Text('예약할 때 입력한 휴대폰 번호를 입력해 주세요.'),
           const SizedBox(height: 16),
-          TextButton(
-              onPressed:
-                  busy ? null : () => setState(() => enteringCode = false),
-              child: Text(enteringCode ? '휴대폰 번호 수정' : '휴대폰 번호 입력 중')),
           PhoneDisplay(phone: phone),
-          TextButton(
-              onPressed:
-                  busy ? null : () => setState(() => enteringCode = true),
-              child: Text(enteringCode ? '예약 번호 입력 중' : '예약 번호 입력')),
-          Text(code.isEmpty ? '예약 번호 10자리' : code,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 28)),
           const SizedBox(height: 16),
           NumberPad(onPressed: _press),
           if (message != null)
             Padding(padding: const EdgeInsets.all(16), child: Text(message!)),
+          if (results.isNotEmpty) const Text('최근 예약부터 최대 50건을 표시합니다.'),
           for (final row in results)
             Card(
                 child: Padding(
@@ -329,9 +320,7 @@ class _LookupScreenState extends State<LookupScreen> {
               const SizedBox(width: 14),
               Expanded(
                   child: FilledButton(
-                      onPressed: !busy &&
-                              RegExp(r'^010\d{8}$').hasMatch(phone) &&
-                              code.length == 10
+                      onPressed: !busy && RegExp(r'^010\d{8}$').hasMatch(phone)
                           ? _search
                           : null,
                       child: const Text('예약 찾기'))),
