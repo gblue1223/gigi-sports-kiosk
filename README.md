@@ -22,7 +22,7 @@ flutter run -d windows --dart-define=CMS_BASE_URL=http://localhost:5173
 flutter run -d chrome --web-port=8080 --dart-define=CMS_BASE_URL=http://localhost:5173
 ```
 
-CMS `/reservations`에서 매장을 선택해 10자리 연결 코드를 발급한 뒤 키오스크에 입력합니다. 코드는 CMS에서 발급할 때 지정한 유효시간(1~60분, 기본 5분) 내 1회 사용 가능하며 연결은 8시간 유지됩니다. 앱 재시작 또는 만료 후에는 다시 연결합니다.
+CMS `/reservations`에서 매장을 선택해 10자리 연결 코드를 발급한 뒤 키오스크에 입력합니다. 코드는 CMS에서 발급할 때 지정한 유효시간(1~60분, 기본 5분) 내 1회 사용 가능하며 연결 세션도 CMS에서 발급 시 지정한 시간(1~168시간, 기본 8시간) 동안 유지됩니다. 세션 시간은 키오스크 연결 시점부터 계산되며, 이미 발급한 코드와 연결된 세션의 만료 시각은 설정 변경으로 바뀌지 않습니다. 앱 재시작 또는 만료 후에는 다시 연결합니다.
 
 ## Vercel Web 배포
 
