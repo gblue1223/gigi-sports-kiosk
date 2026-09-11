@@ -41,7 +41,9 @@ class BookingConfig {
       required this.price60,
       required this.price90,
       required this.openMinute,
-      required this.closeMinute});
+      required this.closeMinute,
+      this.minPlayers = 1,
+      this.maxPlayers = 4});
   factory BookingConfig.fromJson(Map<String, dynamic> json) {
     final store = json['store'] as Map<String, dynamic>;
     final dates = json['dates'] as List;
@@ -52,7 +54,9 @@ class BookingConfig {
         price60: store['price_60'] as int,
         price90: store['price_90'] as int,
         openMinute: store['open_minute'] as int,
-        closeMinute: store['close_minute'] as int);
+        closeMinute: store['close_minute'] as int,
+        minPlayers: store['min_players'] as int? ?? 1,
+        maxPlayers: store['max_players'] as int? ?? 4);
   }
   final String storeName;
   final List<BookingDate> dates;
@@ -60,6 +64,8 @@ class BookingConfig {
   final int price90;
   final int openMinute;
   final int closeMinute;
+  final int minPlayers;
+  final int maxPlayers;
   String get hours {
     String time(int m) =>
         '${(m ~/ 60).toString().padLeft(2, '0')}:${(m % 60).toString().padLeft(2, '0')}';
@@ -72,6 +78,8 @@ class ReservationDraft {
   String? time;
   int? bayNumber;
   int players = 2;
+  int minPlayers = 1;
+  int maxPlayers = 4;
   int duration = 60;
   String phone = '';
   int price60 = 0;

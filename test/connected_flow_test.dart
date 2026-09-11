@@ -49,6 +49,30 @@ void main() {
     await next(tester);
   }
 
+  testWidgets(
+      'CMS player limits clamp the initial count and disable both bounds',
+      (tester) async {
+    final api = FakeBookingRepository()
+      ..minPlayers = 3
+      ..maxPlayers = 4;
+    await start(tester, api);
+    await tester.tap(find.byKey(const Key('new-booking-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('09:00'));
+    await tester.pump();
+    await next(tester);
+    expect(find.text('한 타석은 3~4명이 이용할 수 있습니다'), findsOneWidget);
+    final decrease = find.widgetWithIcon(IconButton, Icons.remove_rounded);
+    final increase = find.widgetWithIcon(IconButton, Icons.add_rounded);
+    expect(tester.widget<IconButton>(decrease).onPressed, isNull);
+    expect(tester.widget<IconButton>(increase).onPressed, isNotNull);
+    await tester.tap(increase);
+    await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(increase).onPressed, isNull);
+    expect(tester.widget<IconButton>(decrease).onPressed, isNotNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('selected bay appears in confirmation and is sent on create',
       (tester) async {
     final api = FakeBookingRepository();

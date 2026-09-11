@@ -7,6 +7,8 @@ class FakeBookingRepository extends BookingRepository {
   bool durationUnavailable = false;
   String? lookupPhone;
   int? createdBay;
+  int minPlayers = 1;
+  int maxPlayers = 4;
   bool selectedBayUnavailable = false;
   final result = Reservation(
       id: 'test',
@@ -27,7 +29,9 @@ class FakeBookingRepository extends BookingRepository {
       price60: 12000,
       price90: 18000,
       openMinute: 540,
-      closeMinute: 1320);
+      closeMinute: 1320,
+      minPlayers: minPlayers,
+      maxPlayers: maxPlayers);
   @override
   Future<List<TimeSlot>> availability(String date, int duration) async => [
         TimeSlot('09:00',

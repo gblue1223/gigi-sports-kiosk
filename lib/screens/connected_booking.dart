@@ -62,6 +62,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
       draft.price60 = value.price60;
       draft.price90 = value.price90;
       draft.storeName = value.storeName;
+      draft.minPlayers = value.minPlayers;
+      draft.maxPlayers = value.maxPlayers;
+      draft.players = draft.players.clamp(value.minPlayers, value.maxPlayers);
       await _loadSlots();
     } catch (error) {
       if (mounted) {

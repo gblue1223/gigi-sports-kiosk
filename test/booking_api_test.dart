@@ -6,6 +6,25 @@ import 'package:gigi_sports_kiosk/services/booking_api.dart';
 import 'package:gigi_sports_kiosk/models/reservation.dart';
 
 void main() {
+  test('CMS player policy parses with backwards compatible defaults', () {
+    final json = <String, dynamic>{
+      'store': <String, dynamic>{
+        'name': '테스트',
+        'price_60': 10000,
+        'price_90': 15000,
+        'open_minute': 540,
+        'close_minute': 1320
+      },
+      'dates': ['2026-12-01']
+    };
+    expect(BookingConfig.fromJson(json).minPlayers, 1);
+    expect(BookingConfig.fromJson(json).maxPlayers, 4);
+    (json['store'] as Map<String, dynamic>)
+        .addAll({'min_players': 2, 'max_players': 3});
+    expect(BookingConfig.fromJson(json).minPlayers, 2);
+    expect(BookingConfig.fromJson(json).maxPlayers, 3);
+  });
+
   const compiledBaseUrl = String.fromEnvironment('CMS_BASE_URL');
   test('default API client consumes the CMS URL passed at compilation',
       () async {

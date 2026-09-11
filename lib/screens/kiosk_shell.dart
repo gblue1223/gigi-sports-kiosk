@@ -418,7 +418,7 @@ class PartyStep extends StatelessWidget {
                     _CounterButton(
                       icon: Icons.remove_rounded,
                       label: '인원 줄이기',
-                      enabled: draft.players > 1,
+                      enabled: draft.players > draft.minPlayers,
                       onTap: () {
                         draft.players--;
                         onChanged();
@@ -453,7 +453,7 @@ class PartyStep extends StatelessWidget {
                     _CounterButton(
                       icon: Icons.add_rounded,
                       label: '인원 늘리기',
-                      enabled: draft.players < 4,
+                      enabled: draft.players < draft.maxPlayers,
                       onTap: () {
                         draft.players++;
                         onChanged();
@@ -462,9 +462,9 @@ class PartyStep extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Center(
+                Center(
                   child: Text(
-                    '한 타석은 최대 4명까지 이용할 수 있습니다',
+                    '한 타석은 ${draft.minPlayers}~${draft.maxPlayers}명이 이용할 수 있습니다',
                     style: TextStyle(color: KioskColors.muted, fontSize: 15),
                   ),
                 ),
