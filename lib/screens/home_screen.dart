@@ -63,12 +63,12 @@ class HomeScreen extends StatelessWidget {
                   key: const Key('lookup-button'),
                   icon: Icons.search_rounded,
                   title: '내 예약 확인',
-                  description: '휴대폰 번호로 예약을 찾습니다',
+                  description: '휴대폰·예약 번호로 예약을 찾습니다',
                   onTap: onLookup,
                   compact: compact,
                 ),
                 const SizedBox(height: 24),
-                const _TodayInfo(),
+                const Text('예약 가능한 날짜와 시간은 예약 화면에서 확인해 주세요.'),
               ],
             ),
           ),
@@ -287,45 +287,6 @@ class _HomeActionCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _TodayInfo extends StatelessWidget {
-  const _TodayInfo();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 18),
-      decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: KioskColors.line))),
-      child: const Row(
-        children: [
-          Icon(Icons.schedule_outlined, color: KioskColors.greenDark, size: 25),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('오늘 운영시간',
-                    style: TextStyle(
-                        color: KioskColors.muted,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500)),
-                SizedBox(height: 4),
-                Text('오전 9:00 – 오후 10:00',
-                    style: TextStyle(
-                        color: KioskColors.ink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
-          Icon(Icons.sports_golf_outlined,
-              color: KioskColors.greenDark, size: 30),
-        ],
       ),
     );
   }

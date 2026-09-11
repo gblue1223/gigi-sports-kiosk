@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/kiosk_shell.dart';
+import 'services/booking_api.dart';
 import 'theme.dart';
 
 void main() {
@@ -14,7 +15,8 @@ void main() {
 }
 
 class GigiKioskApp extends StatelessWidget {
-  const GigiKioskApp({super.key});
+  const GigiKioskApp({this.api, super.key});
+  final BookingRepository? api;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ class GigiKioskApp extends StatelessWidget {
       title: 'GIGI Sports Kiosk',
       debugShowCheckedModeBanner: false,
       theme: buildKioskTheme(),
-      home: const KioskShell(),
+      home: KioskShell(api: api),
     );
   }
 }

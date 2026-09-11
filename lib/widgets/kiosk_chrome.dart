@@ -54,7 +54,7 @@ class KioskHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('미추홀점',
+                Text('간편 예약',
                     style: TextStyle(
                         color: KioskColors.ink,
                         fontSize: 18,

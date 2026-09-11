@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/booking_api.dart';
+import 'connected_booking.dart';
 
 import '../models/reservation.dart';
 import '../theme.dart';
@@ -8,7 +11,8 @@ import 'home_screen.dart';
 enum KioskRoute { home, booking, lookup }
 
 class KioskShell extends StatefulWidget {
-  const KioskShell({super.key});
+  const KioskShell({this.api, super.key});
+  final BookingRepository? api;
 
   @override
   State<KioskShell> createState() => _KioskShellState();
@@ -16,8 +20,32 @@ class KioskShell extends StatefulWidget {
 
 class _KioskShellState extends State<KioskShell> {
   KioskRoute route = KioskRoute.home;
+  late final BookingRepository api;
+  Timer? idle;
+  @override
+  void initState() {
+    super.initState();
+    api = widget.api ?? CmsBookingApi();
+  }
 
-  void _goHome() => setState(() => route = KioskRoute.home);
+  void _activity() {
+    idle?.cancel();
+    if (route == KioskRoute.lookup) {
+      idle = Timer(const Duration(minutes: 2), _goHome);
+    }
+  }
+
+  @override
+  void dispose() {
+    idle?.cancel();
+    if (widget.api == null) api.close();
+    super.dispose();
+  }
+
+  void _goHome() {
+    idle?.cancel();
+    if (mounted) setState(() => route = KioskRoute.home);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,148 +59,31 @@ class _KioskShellState extends State<KioskShell> {
               child: DecoratedBox(
                 decoration: const BoxDecoration(color: KioskColors.cream),
                 child: SafeArea(
-                  child: switch (route) {
-                    KioskRoute.home => HomeScreen(
-                        onBooking: () =>
-                            setState(() => route = KioskRoute.booking),
-                        onLookup: () =>
-                            setState(() => route = KioskRoute.lookup),
-                      ),
-                    KioskRoute.booking => BookingFlowScreen(onExit: _goHome),
-                    KioskRoute.lookup => LookupScreen(onExit: _goHome),
-                  },
+                  child: Listener(
+                      onPointerDown: (_) => _activity(),
+                      child: !api.paired
+                          ? PairingScreen(
+                              api: api, onPaired: () => setState(() {}))
+                          : switch (route) {
+                              KioskRoute.home => HomeScreen(
+                                  onBooking: () => setState(
+                                      () => route = KioskRoute.booking),
+                                  onLookup: () => setState(() {
+                                    route = KioskRoute.lookup;
+                                    _activity();
+                                  }),
+                                ),
+                              KioskRoute.booking =>
+                                BookingFlowScreen(onExit: _goHome, api: api),
+                              KioskRoute.lookup =>
+                                LookupScreen(onExit: _goHome, api: api),
+                            }),
                 ),
               ),
             ),
           );
         },
       ),
-    );
-  }
-}
-
-class BookingFlowScreen extends StatefulWidget {
-  const BookingFlowScreen({required this.onExit, super.key});
-
-  final VoidCallback onExit;
-
-  @override
-  State<BookingFlowScreen> createState() => _BookingFlowScreenState();
-}
-
-class _BookingFlowScreenState extends State<BookingFlowScreen> {
-  static const dates = [
-    BookingDate(label: '오늘', day: 1, weekday: '화'),
-    BookingDate(label: '내일', day: 2, weekday: '수'),
-    BookingDate(label: '9월 3일', day: 3, weekday: '목'),
-    BookingDate(label: '9월 4일', day: 4, weekday: '금'),
-    BookingDate(label: '9월 5일', day: 5, weekday: '토'),
-  ];
-
-  static const slots = [
-    TimeSlot('09:00', remaining: 2),
-    TimeSlot('10:00', enabled: false),
-    TimeSlot('11:00', remaining: 1),
-    TimeSlot('12:00', remaining: 3),
-    TimeSlot('13:00', remaining: 2),
-    TimeSlot('14:00', remaining: 3),
-    TimeSlot('15:00', enabled: false),
-    TimeSlot('16:00', remaining: 2),
-    TimeSlot('17:00', remaining: 1),
-    TimeSlot('18:00', remaining: 3),
-    TimeSlot('19:00', remaining: 2),
-    TimeSlot('20:00', remaining: 3),
-  ];
-
-  final draft = ReservationDraft();
-  int step = 0;
-  bool completed = false;
-
-  bool get canContinue => switch (step) {
-        0 => draft.time != null,
-        1 => true,
-        2 => draft.phone.length == 11,
-        3 => true,
-        _ => false,
-      };
-
-  void _back() {
-    if (step == 0) {
-      _confirmExit();
-    } else {
-      setState(() => step--);
-    }
-  }
-
-  Future<void> _confirmExit() async {
-    final shouldExit = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('예약을 그만할까요?'),
-        content: const Text('선택한 내용은 저장되지 않습니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('계속 예약하기'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('첫 화면으로'),
-          ),
-        ],
-      ),
-    );
-    if (shouldExit == true) widget.onExit();
-  }
-
-  void _next() {
-    if (!canContinue) return;
-    if (step < 3) {
-      setState(() => step++);
-    } else {
-      setState(() => completed = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (completed) {
-      return BookingSuccessScreen(draft: draft, onDone: widget.onExit);
-    }
-
-    return Column(
-      children: [
-        KioskHeader(onHome: _confirmExit),
-        BookingProgress(currentStep: step),
-        Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: KeyedSubtree(
-              key: ValueKey(step),
-              child: switch (step) {
-                0 => DateTimeStep(
-                    dates: dates,
-                    slots: slots,
-                    draft: draft,
-                    onChanged: () => setState(() {}),
-                  ),
-                1 => PartyStep(draft: draft, onChanged: () => setState(() {})),
-                2 => ContactStep(
-                    draft: draft,
-                    onChanged: () => setState(() {}),
-                  ),
-                _ => ConfirmStep(draft: draft, dates: dates),
-              },
-            ),
-          ),
-        ),
-        BookingBottomBar(
-          step: step,
-          enabled: canContinue,
-          onBack: _back,
-          onNext: _next,
-        ),
-      ],
     );
   }
 }
@@ -538,7 +449,7 @@ class PartyStep extends StatelessWidget {
         const SizedBox(height: 14),
         _DurationOption(
           minutes: 60,
-          price: 10000,
+          price: draft.price60,
           description: '가볍게 한 라운드',
           selected: draft.duration == 60,
           onTap: () {
@@ -549,7 +460,7 @@ class PartyStep extends StatelessWidget {
         const SizedBox(height: 12),
         _DurationOption(
           minutes: 90,
-          price: 15000,
+          price: draft.price90,
           description: '여유 있게 즐기기',
           selected: draft.duration == 90,
           recommended: true,
@@ -729,7 +640,7 @@ class ContactStep extends StatelessWidget {
       children: [
         Text('연락처를 입력해 주세요', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 8),
-        const Text('예약 안내 문자를 받을 휴대폰 번호입니다.'),
+        const Text('예약 확인에 사용할 휴대폰 번호입니다.'),
         const SizedBox(height: 24),
         PhoneDisplay(phone: draft.phone),
         const SizedBox(height: 18),
@@ -887,16 +798,16 @@ class ConfirmStep extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const _SummaryRow(
+                _SummaryRow(
                   icon: Icons.storefront_rounded,
                   label: '매장',
-                  value: 'GIGI Sports 미추홀점',
+                  value: draft.storeName,
                 ),
                 const Divider(height: 30),
                 _SummaryRow(
                   icon: Icons.calendar_month_rounded,
                   label: '예약 일시',
-                  value: '9월 ${date.day}일 (${date.weekday})  ${draft.time}',
+                  value: '${date.fullLabel}  ${draft.time}',
                 ),
                 const Divider(height: 30),
                 _SummaryRow(
@@ -1066,15 +977,39 @@ class BookingBottomBar extends StatelessWidget {
   }
 }
 
-class BookingSuccessScreen extends StatelessWidget {
+class BookingSuccessScreen extends StatefulWidget {
   const BookingSuccessScreen({
     required this.draft,
     required this.onDone,
+    required this.reservation,
     super.key,
   });
 
   final ReservationDraft draft;
   final VoidCallback onDone;
+  final Reservation reservation;
+  @override
+  State<BookingSuccessScreen> createState() => _BookingSuccessScreenState();
+}
+
+class _BookingSuccessScreenState extends State<BookingSuccessScreen> {
+  Timer? timer;
+  ReservationDraft get draft => widget.draft;
+  Reservation get reservation => widget.reservation;
+  VoidCallback get onDone => widget.onDone;
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer(const Duration(seconds: 90), () {
+      if (mounted) onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1108,7 +1043,7 @@ class BookingSuccessScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    '예약 안내 문자를 보내드렸습니다.',
+                    '예약 번호를 사진으로 남겨 주세요.\n90초 뒤 첫 화면으로 돌아갑니다.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 19),
                   ),
@@ -1132,9 +1067,9 @@ class BookingSuccessScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'GIGI-0901-024',
-                          style: TextStyle(
+                        Text(
+                          reservation.code,
+                          style: const TextStyle(
                             color: KioskColors.greenDark,
                             fontSize: 31,
                             letterSpacing: 1,
@@ -1143,7 +1078,7 @@ class BookingSuccessScreen extends StatelessWidget {
                         ),
                         const Divider(height: 34),
                         Text(
-                          '9월 ${BookingFlowScreenStateAccess.dateDay(draft.dateIndex)}일  ${draft.time}  ·  ${draft.players}명',
+                          '${reservation.dateLabel} · ${reservation.players}명\n${reservation.bayNumber}번 타석 · ${reservation.totalPrice}원',
                           style: const TextStyle(
                             color: KioskColors.ink,
                             fontSize: 21,
@@ -1151,9 +1086,9 @@ class BookingSuccessScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'GIGI Sports 미추홀점',
-                          style: TextStyle(
+                        Text(
+                          draft.storeName,
+                          style: const TextStyle(
                             color: KioskColors.muted,
                             fontSize: 17,
                           ),
@@ -1176,118 +1111,6 @@ class BookingSuccessScreen extends StatelessWidget {
               icon: const Icon(Icons.home_rounded),
               label: const Text('첫 화면으로 돌아가기'),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-abstract final class BookingFlowScreenStateAccess {
-  static int dateDay(int index) => index + 1;
-}
-
-class LookupScreen extends StatefulWidget {
-  const LookupScreen({required this.onExit, super.key});
-
-  final VoidCallback onExit;
-
-  @override
-  State<LookupScreen> createState() => _LookupScreenState();
-}
-
-class _LookupScreenState extends State<LookupScreen> {
-  String phone = '';
-  bool searched = false;
-
-  void _press(String value) {
-    setState(() {
-      searched = false;
-      if (value == 'back') {
-        if (phone.isNotEmpty) phone = phone.substring(0, phone.length - 1);
-      } else if (phone.length < 11) {
-        phone += value;
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        KioskHeader(onHome: widget.onExit),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(28, 30, 28, 30),
-            children: [
-              Text(
-                '예약을 확인할게요',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              const Text('예약할 때 입력한 휴대폰 번호를 눌러주세요.'),
-              const SizedBox(height: 24),
-              PhoneDisplay(phone: phone),
-              const SizedBox(height: 18),
-              NumberPad(onPressed: _press),
-              if (searched) ...[
-                const SizedBox(height: 22),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: KioskColors.greenSoft,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        color: KioskColors.greenDark,
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '현재 예약 내역이 없습니다. 번호를 다시 확인해 주세요.',
-                          style: TextStyle(
-                            color: KioskColors.greenDark,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.fromLTRB(24, 14, 24, 18),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: KioskColors.line)),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 138,
-                child: OutlinedButton(
-                  onPressed: widget.onExit,
-                  child: const Text('취소'),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: phone.length == 11
-                      ? () => setState(() => searched = true)
-                      : null,
-                  icon: const Icon(Icons.search_rounded),
-                  label: const Text('예약 찾기'),
-                ),
-              ),
-            ],
           ),
         ),
       ],

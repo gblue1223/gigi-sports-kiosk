@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gigi_sports_kiosk/main.dart';
+import 'fake_booking_repository.dart';
 
 void main() {
   Future<void> setPortraitSize(
@@ -15,7 +16,7 @@ void main() {
 
   testWidgets('home screen fits a 9:16 kiosk display', (tester) async {
     await setPortraitSize(tester);
-    await tester.pumpWidget(const GigiKioskApp());
+    await tester.pumpWidget(GigiKioskApp(api: FakeBookingRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('새로 예약하기'), findsOneWidget);
@@ -29,7 +30,7 @@ void main() {
       await setPortraitSize(tester, size: size);
       tester.platformDispatcher.textScaleFactorTestValue = 1.3;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await tester.pumpWidget(const GigiKioskApp());
+      await tester.pumpWidget(GigiKioskApp(api: FakeBookingRepository()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
@@ -54,7 +55,7 @@ void main() {
   }
   testWidgets('user can complete a reservation', (tester) async {
     await setPortraitSize(tester);
-    await tester.pumpWidget(const GigiKioskApp());
+    await tester.pumpWidget(GigiKioskApp(api: FakeBookingRepository()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('new-booking-button')));
@@ -83,6 +84,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('예약이 완료되었습니다!'), findsOneWidget);
-    expect(find.text('GIGI-0901-024'), findsOneWidget);
+    expect(find.text('1234567890'), findsOneWidget);
+    expect(find.text('테스트 매장'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
   });
 }
